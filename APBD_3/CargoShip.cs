@@ -31,6 +31,11 @@ public class CargoShip (double maxSpeedKnots, int maxContainers, double maxCargo
             Load(container);
     }
 
+    public bool IsContainerLoaded(string? serialNumber)
+    {
+        return serialNumber != null && _containers.Any(container => container.SerialNumber == serialNumber);
+    }
+    
     public CargoContainer Unload(string serialNumber)
     {
         var toRemove = _containers.Find(container => container.SerialNumber == serialNumber);
