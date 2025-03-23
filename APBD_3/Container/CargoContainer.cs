@@ -14,7 +14,7 @@ public abstract class CargoContainer(
     protected double MaxCargoMassKg { get; set; } = maxCargoMassKg;
 
 
-    public virtual void LoadCargo(int mass)
+    public virtual void LoadCargo(double mass)
     {
         if (mass > MaxCargoMassKg) 
             throw new OverfillException("Trying to load cargo exceeding maximum cargo mass!");

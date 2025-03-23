@@ -14,7 +14,7 @@ public class LiquidContainer(
         Console.WriteLine($"[HAZARD] container {SerialNumber}");
     }
 
-    public override void LoadCargo(int mass)
+    public override void LoadCargo(double mass)
     {
         if (IsHazardous && mass > MaxCargoMassKg / 2)
         {

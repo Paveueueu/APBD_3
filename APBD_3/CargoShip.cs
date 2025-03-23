@@ -14,14 +14,17 @@ public class CargoShip (double maxSpeedKnots, int maxContainers, double maxCargo
         return _containers.Sum(container => container.CargoMassKg + container.OwnMassKg);
     }
 
-    public void Load(CargoContainer cargoContainer)
+    public void CanLoad(CargoContainer cargoContainer)
     {
-        ArgumentNullException.ThrowIfNull("container null");
         if (cargoContainer.OwnMassKg + cargoContainer.CargoMassKg > MaxCargoMassT + GetCargoMass())
             throw new OverfillException("Trying to load container exceeding maximum cargo mass of the ship!");
         if (_containers.Count > MaxContainers)
             throw new OverfillException("Trying to load container exceeding maximum numbers of containers the ship!");
-        
+    }
+    
+    public void Load(CargoContainer cargoContainer)
+    {
+        CanLoad(cargoContainer);
         _containers.Add(cargoContainer);
     }
     
@@ -46,7 +49,7 @@ public class CargoShip (double maxSpeedKnots, int maxContainers, double maxCargo
         return toRemove;
     }
     
-    public CargoContainer Replace(string serialNumber, CargoContainer newContainer)
+    public void Replace(string serialNumber, CargoContainer newContainer)
     {
         ArgumentNullException.ThrowIfNull("serialNumber");
         ArgumentNullException.ThrowIfNull("newContainer");
@@ -59,7 +62,7 @@ public class CargoShip (double maxSpeedKnots, int maxContainers, double maxCargo
             throw new OverfillException("Trying to replace container exceeding maximum cargo mass of the ship!");
         
         _containers.Remove(toReplace);
-        return toReplace;
+        _containers.Add(newContainer);
     }
 
     public void MoveContainer(string serialNumber, CargoShip newShip)
