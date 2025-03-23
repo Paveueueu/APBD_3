@@ -55,8 +55,46 @@ public static class Program
         Console.WriteLine("12. Wypisz informacje o statku");
         Console.WriteLine("20. Wyjdź");
     }
-    
 
+    private static string InputString(string msg)
+    {
+        Console.Write(msg);
+        var result = Console.ReadLine() ?? string.Empty;
+        Console.WriteLine();
+        return result;
+    }
+
+    private static double InputDouble(string msg)
+    {
+        Console.Write(msg);
+        var result = Convert.ToDouble(Console.ReadLine());
+        Console.WriteLine();
+        return result;
+    }
+
+    private static int InputInt(string msg)
+    {
+        Console.Write(msg);
+        var result = Convert.ToInt32(Console.ReadLine());
+        Console.WriteLine();
+        return result;
+    }
+    
+    private static CargoContainer? FindContainer(string serial)
+    {
+        return Containers.Find(con => con.SerialNumber == serial);
+    }
+
+    private static CargoShip? FindShip(int index)
+    {
+        return index > 0 && index <= Ships.Count ? Ships[index - 1] : null;
+    }
+    
+    private static CargoShip? FindShipWithContainer(string? serial)
+    {
+        return serial == null ? null : Ships.FirstOrDefault(ship => ship.IsContainerLoaded(serial));
+    }
+    
     public static void Main()
     {
         var lastMsg = "Brak";
@@ -71,7 +109,8 @@ public static class Program
             
             Console.Write("> ");
             var choice = Console.ReadLine();
-        
+            Console.Clear();
+            
             switch (choice)
             {
                 case "1":
@@ -121,331 +160,200 @@ public static class Program
     
     private static string AddCargoShip()
     {
-        Console.Clear();
-        Console.WriteLine("Dodaj kontenerowiec");
-        Console.Write("maxSpeedKnots(double): ");
-        var maxSpeedKnots = Convert.ToDouble(Console.ReadLine());
-        Console.WriteLine();
-        
-        Console.Write("maxContainers(int): ");
-        var maxContainers = Convert.ToInt32(Console.ReadLine());
-        Console.WriteLine();
-        
-        Console.Write("maxCargoMassT(double): ");
-        var maxCargoMassT = Convert.ToDouble(Console.ReadLine());
-        Console.WriteLine();
-        
-        Ships.Add(new CargoShip(maxSpeedKnots, maxContainers, maxCargoMassT));
+        Console.WriteLine("=== Dodawanie kontenerowca ===");
+        Ships.Add(new CargoShip(
+            InputDouble("Max prędkość [kn] (double): "), 
+            InputInt("Max kontenerów (int): "), 
+            InputDouble("Max masa ładunku [kg] (double): "))
+        );
         return $"Dodano statek {Ships.Count}";
     }
     
     private static string RemoveCargoShip()
     {
-        Console.Clear();
         Console.WriteLine("=== Usuwanie kontenerowca ===");
-        Console.Write("numer(int): ");
-        var index = Convert.ToInt32(Console.ReadLine());
+        var index = InputInt("Numer statku (int): ");
         
-        if (index < 0 || index > Ships.Count) return "Nieistniejący numer statku!";
-        Ships.RemoveAt(index - 1);
+        var ship = FindShip(index);
+        if (ship != null) Ships.Remove(ship);
+        
         return $"Usunięto statek {index}";
     }
     
     private static string AddCargoContainer()
     {
-        Console.Clear();
         Console.WriteLine("=== Dodawanie kontenera ===");
         
-        Console.Write("Masa własna [kg] (double): ");
-        var ownMass = Convert.ToDouble(Console.ReadLine());
-        Console.WriteLine();
-        
-        Console.Write("Wysokość [cm] (double): ");
-        var height = Convert.ToDouble(Console.ReadLine());
-        Console.WriteLine();
-        
-        Console.Write("Głębokość [cm] (double): ");
-        var depth = Convert.ToDouble(Console.ReadLine());
-        Console.WriteLine();
-        
-        Console.Write("Maksymalna masa ładunku [kg] (double): ");
-        var maxCargoMass = Convert.ToDouble(Console.ReadLine());
-        Console.WriteLine();
-        
-        
-        Console.Write("typ kontenera(L/G/C): ");
-        var type = Console.ReadLine();
-        Console.WriteLine();
+        var ownMass = InputDouble("Masa własna [kg] (double): ");
+        var height = InputDouble("Wysokość [cm] (double): ");
+        var depth = InputDouble("Głębokość [cm] (double): ");
+        var maxCargoMass = InputInt("Maksymalna masa ładunku [kg] (double): ");
+        var type = InputString("typ kontenera(L/G/C): ");
         
         CargoContainer container;
-
         switch (type)
         {
             case "L" or "l":
-                Console.Write("Ładunek niebezpieczny (default: NIE) (TAK/..): ");
-                var isHazardous = Console.ReadLine() == "TAK";
-                Console.WriteLine();
+                var isHazardous = InputString("Ładunek niebezpieczny (default: NIE) (TAK/..): ") == "TAK";
                 container = new LiquidContainer(ownMass, height, depth, maxCargoMass, isHazardous);
                 break;
             case "G" or "g":
                 container = new GasContainer(ownMass, height, depth, maxCargoMass);
                 break;
             case "C" or "c":
-                Console.Write("Typ ładunku (string): ");
-                var cargoType = Console.ReadLine() ?? string.Empty;
-                Console.WriteLine();
-
-                Console.Write("Temperatura [degC] (double): ");
-                var temperature = Convert.ToDouble(Console.ReadLine());
-                Console.WriteLine();
-
+                var cargoType = InputString("Typ ładunku (string): ");
+                var temperature = InputDouble("Temperatura [degC] (double): ");
                 container = new CoolingContainer(ownMass, height, depth, maxCargoMass, cargoType, temperature);
                 break;
             default:
                 return $"Nieistniejący typ kontenera: {type}";
         }
 
-        Containers.Add(container);
+        try {
+            Containers.Add(container);
+        }
+        catch (Exception e) {
+            return $"Nie dodano kontenera. {e.Message}";
+        }
+
         return $"Dodano kontener {container.SerialNumber}";
     }
     
     private static string RemoveCargoContainer()
     {
-        Console.Clear();
         Console.WriteLine("=== Usuwanie kontenera ===");
-        Console.Write("Numer seryjny: ");
-        var serial = Console.ReadLine();
+        var serial = InputString("Numer seryjny: ");
         
-        if (serial == null) return "Nie znaleziono kontenera!";
-        
-        var found = Containers.Find( con => con.SerialNumber == serial);
-        if (found == null) return "Nie znaleziono kontenera!";
-        
-        Containers.Remove(found);
+        var container = FindContainer(serial);
+        if (container != null) Containers.Remove(container);
 
-        foreach (var ship in Ships.Where(ship => ship.IsContainerLoaded(serial)))
-        {
-            ship.Unload(serial);
-            return $"Usunięto kontener {serial}";
-        }
+        var ship = FindShipWithContainer(serial);
+        if (ship == null) return $"Usunięto kontener {serial}";
         
+        ship.Unload(serial);
         return $"Usunięto kontener {serial}";
     }
     
     private static string LoadContainerOnShip()
     {
-        Console.Clear();
         Console.WriteLine("=== Załadunek kontenera na kontenerowiec ===");
-        Console.Write("Numer seryjny: ");
-        var serial = Console.ReadLine();
-        var found = Containers.Find( con => con.SerialNumber == serial);
+        var container = FindContainer(InputString("Numer seryjny: "));
+        var ship = FindShip(InputInt("Statek: "));
 
-        if (found == null) {
-            return "Nie znaleziono kontenera!";
+        try {
+            ship?.Load(container);
+        } catch (Exception e) {
+            return $"Nie załadowano kontenera {container?.SerialNumber} na statek. {e.Message}";
         }
-        
-        Console.Write("Statek: ");
-        var index = Convert.ToInt32(Console.ReadLine());
-        if (index > Ships.Count || index < 1) {
-            return "Nieistniejący numer statku!";
-        }
-
-        try
-        {
-            Ships[index - 1].Load(found);
-        }
-        catch (OverfillException e)
-        {
-            return $"Nie załadowano kontenera {serial} na statek {index}. Zbyt duża masa kontenera";
-        }
-        
-        return $"Załadowano kontener {serial} na statek {index}";
+        return $"Załadowano kontener {container?.SerialNumber} na statek";
     } 
     
     private static string UnloadContainerFromShip()
     {
-        Console.Clear();
         Console.WriteLine("=== Rozładunek kontenera z kontenerowca ===");
-        Console.Write("Numer seryjny: ");
-        var serial = Console.ReadLine();
+        var serial = InputString("Numer seryjny: ");
+        var ship = FindShipWithContainer(serial);
 
-        if (serial == null) {
-            return "Nie znaleziono kontenera!";
+        try {
+            ship?.Unload(serial);
+        } catch (Exception e) {
+            return $"Nie rozładowano kontenera {serial} ze statku. {e.Message}";
         }
-        
-        Console.Write("Statek: ");
-        var index = Convert.ToInt32(Console.ReadLine());
-        if (index > Ships.Count || index < 1) {
-            return "Nieistniejący numer statku!";
-        }
-
-        try
-        {
-            Ships[index - 1].Unload(serial);
-        }
-        catch (NullReferenceException e)
-        {
-            return $"Nie rozładowano kontenera {serial} ze statku {index}. Nie ma go na tym statku";
-        }
-        
-        return $"Załadowano kontener {serial} na statek {index}";
+        return $"Rozładowano kontener {serial} ze statku";
     }
     
     private static string LoadCargoToContainer()
     {
-        Console.Clear();
         Console.WriteLine("=== Załadunek ładunku do kontenera ===");
-        Console.Write("Numer seryjny: ");
-        var serial = Console.ReadLine();
-        var found = Containers.Find( con => con.SerialNumber == serial);
-
-        if (found == null) {
-            return "Nie znaleziono kontenera!";
-        }
+        var container = FindContainer(InputString("Numer seryjny: "));
         
-        Console.Write("Masa ładunku [kg](double): ");
-        var mass = Convert.ToDouble(Console.ReadLine());
-        if (mass < 0)
-        {
-            return "Nie załadowano ładunku! Niewłaściwa masa";
+        var mass = InputDouble("Masa ładunku [kg](double): ");
+        try {
+            container?.LoadCargo(mass);
+        } catch (Exception e) {
+            return $"Nie załadowano ładunku do kontenera {container?.SerialNumber}. {e.Message}";
         }
-        
-        try
-        {
-            found.LoadCargo(mass);
-        }
-        catch (OverfillException e)
-        {
-            return $"Nie załadowano ładunku do kontenera {serial}. Zbyt duża masa ładunku";
-        }
-        
-        return $"Załadowano ładunek do kontenera {serial}";
+        return $"Załadowano ładunek do kontenera {container?.SerialNumber}";
     }
     
     private static string UnloadCargoFromContainer()
     {
-        Console.Clear();
         Console.WriteLine("=== Rozładunek ładunku z kontenera ===");
-        Console.Write("Numer seryjny: ");
-        var serial = Console.ReadLine();
-        var found = Containers.Find( con => con.SerialNumber == serial);
-
-        if (found == null) {
-            return "Nie znaleziono kontenera!";
-        }
-        
-        found.UnloadCargo();
-        
-        return $"Rozładowano ładunek z kontenera {serial}";
+        var container = FindContainer(InputString("Numer seryjny: "));
+        container?.UnloadCargo();
+        return $"Rozładowano ładunek z kontenera {container?.SerialNumber}";
     }
     
     private static string ReplaceContainerOnShip()
     {
-        Console.Clear();
         Console.WriteLine("=== Zamiana kontenera na kontenerowcu ===");
-        Console.Write("Numer seryjny: ");
-        var serial = Console.ReadLine();
+        var serial = InputString("Numer seryjny: ");
+        var container = FindContainer(serial);
+        var newContainer = FindContainer(InputString("Numer seryjny nowego kontenera: "));
         
-        if (serial == null)
-        {
-            return "Nie znaleziono kontenera!";
-        }
-        
-        var found = Containers.Find( con => con.SerialNumber == serial);
+        var ship = FindShipWithContainer(container?.SerialNumber);
+        if (ship == null) return "Kontenera nie ma na statku!";
 
-        if (found == null)
+        try
         {
-            return "Nie znaleziono kontenera!";
+            ship.Replace(serial, newContainer);
+            return $"Zastąpiono kontener {serial}, kontenerem {newContainer?.SerialNumber}";
         }
-        
-        Console.Write("Numer seryjny nowego kontenera: ");
-        var serialNew = Console.ReadLine();
-        var foundNew = Containers.Find( con => con.SerialNumber == serialNew);
-        
-        if (foundNew == null) {
-            return "Nie znaleziono kontenera!";
-        }
-        
-        foreach (var ship in Ships.Where(ship => ship.IsContainerLoaded(serial)))
+        catch (Exception e)
         {
-            if (!ship.IsContainerLoaded(serial)) continue;
-            ship.Replace(serial, foundNew);
-            return $"Zastąpiono kontener {serial}, kontenerem {serialNew}";
+            return $"Nie zastąpiono kontenera {serial}. {e.Message}";
         }
-        
-        return $"Nie zastąpiono kontenera {serial}! Nie ma go na żadnym statku";
     }
     
     private static string MoveContainerToOtherShip()
     {
-        Console.Clear();
         Console.WriteLine("=== Przeniesienie kontenera na inny kontenerowiec ===");
-        Console.Write("Numer seryjny: ");
-        
-        var serial = Console.ReadLine();
-        if (serial == null)
-        {
-            return "Nie znaleziono kontenera!";
-        }
+        var container = FindContainer(InputString("Numer seryjny: "));
+        var ship = FindShipWithContainer(container?.SerialNumber);
+        var newShip = FindShip(InputInt("Numer nowego statku: "));
 
-        var found = Containers.Find( con => con.SerialNumber == serial);
-        if (found == null)
+        try
         {
-            return "Nie znaleziono kontenera!";
+            if (container == null) throw new ArgumentException("Nie znaleziono kontenera!");
+            if (ship == null) throw new ArgumentException("Nie znaleziono statku!");
+            if (newShip == null) throw new ArgumentException("Nie znaleziono statku!");
+            
+            ship.MoveContainer(container.SerialNumber, newShip);
+            return $"Przeniesiono kontener {container.SerialNumber}.";
         }
-        
-        Console.Write("Nowy statek: ");
-        var index = Convert.ToInt32(Console.ReadLine());
-        if (index > Ships.Count || index < 1) {
-            return "Nieistniejący numer statku!";
-        }
-
-        var old = 0;
-        foreach (var ship in Ships.Where(ship => ship.IsContainerLoaded(serial)))
+        catch (Exception e)
         {
-            old++;
-            ship.MoveContainer(serial, Ships[index - 1]);
-            return $"Przeniesiono kontener {serial} ze statku {old} na statek {index}";
+            return $"Nie przeniesiono kontenera! {e.Message}";
         }
-        return "Nie przeniesiono kontenera!";
     }
     
     private static string PrintInfoOnContainer()
     {
-        Console.Clear();
         Console.WriteLine("=== Informacja o kontenerze ===");
-        Console.Write("Numer seryjny: ");
-        var serial = Console.ReadLine();
+        var container = FindContainer(InputString("Numer seryjny: "));
+        if (container == null) return "Nie znaleziono kontenera!";
         
-        if (serial == null) return "Nie znaleziono kontenera!";
-        var found = Containers.Find( con => con.SerialNumber == serial);
-        if (found == null) return "Nie znaleziono kontenera!";
-
-        Console.WriteLine($"  {found}");
+        Console.WriteLine($"  {container}");
         
-        
-        foreach (var ship in Ships.Where(ship => ship.IsContainerLoaded(serial)))
+        var ship = FindShipWithContainer(container.SerialNumber);
+        if (ship != null)
         {
             Console.WriteLine($"  Znajduje się na statku {ship}");
-            return $"Wypisano info o kontenerze {serial}";
+            return $"Wypisano info o kontenerze {container.SerialNumber}";
         }
         
         Console.WriteLine("  Nie Znajduje się na żadnym statku");
-        return $"Wypisano info o kontenerze {serial}";
+        return $"Wypisano info o kontenerze {container.SerialNumber}";
     }
     
     private static string PrintInfoOnShip()
     {
-        Console.Clear();
         Console.WriteLine("=== Informacja o kontenerowcu ===");
-        Console.Write("numer(int): ");
-        var index = Convert.ToInt32(Console.ReadLine());
+        var ship = FindShip(InputInt("Numer statku (int): "));
+        if (ship == null) return "Nie znaleziono statku!";
         
-        if (index < 0 || index > Ships.Count) return "Nieistniejący numer statku!";
-        
-        Console.WriteLine(Ships[index]);
-        
-        return $"Wypisano info o statku {index}";
+        Console.WriteLine(ship);
+        return "Wypisano info o statku";
     }
 }
 

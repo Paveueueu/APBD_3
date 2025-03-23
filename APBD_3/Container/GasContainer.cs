@@ -1,14 +1,13 @@
 ﻿namespace APBD_3.Container;
 
-public class GasContainer(
-        double ownMassKg, double heightCm, double depthCm, double maxCargoMassKg
-    ) : CargoContainer($"KON-G-{_nextSerialNumber++}", ownMassKg, heightCm, depthCm, maxCargoMassKg), IHazardNotifier
+public class GasContainer(double ownMassKg, double heightCm, double depthCm, double maxCargoMassKg)
+    : CargoContainer($"KON-G-{_nextSerialNumber++}", ownMassKg, heightCm, depthCm, maxCargoMassKg), IHazardNotifier
 {
     private static int _nextSerialNumber = 1;
     
     public void Notify()
     {
-        Console.WriteLine($"[HAZARD] container {SerialNumber}");
+        Console.WriteLine($"[UWAGA] kontener {SerialNumber}");
     }
     
     public override void LoadCargo(double mass)
@@ -16,7 +15,7 @@ public class GasContainer(
         if (mass > MaxCargoMassKg)
         {
             Notify();
-            throw new OverfillException("Cargo exceeds maximum capacity.");
+            throw new OverfillException("Przekroczono dopuszczalny limit masy!");
         }
         base.LoadCargo(mass);
     }

@@ -1,32 +1,35 @@
 ﻿namespace APBD_3.Container;
 
-public class LiquidContainer(
-        double ownMassKg, double heightCm, double depthCm, double maxCargoMassKg,
-        bool isHazardous
-    ) : CargoContainer($"KON-L-{_nextSerialNumber++}", ownMassKg, heightCm, depthCm, maxCargoMassKg), IHazardNotifier
+public class LiquidContainer : CargoContainer
 {
     private static int _nextSerialNumber = 1;
+    private bool IsHazardous { get; }
 
-    private bool IsHazardous { get; set; } = isHazardous;
-
-    public void Notify()
+    public LiquidContainer(double ownMassKg, double heightCm, double depthCm, double maxCargoMassKg, bool isHazardous)
+        : base($"KON-L-{_nextSerialNumber++}", ownMassKg, heightCm, depthCm, maxCargoMassKg)
     {
-        Console.WriteLine($"[HAZARD] container {SerialNumber}");
+        IsHazardous = isHazardous;
+    }
+
+    private void Notify()
+    {
+        Console.WriteLine($"[UWAGA] kontener {SerialNumber}");
     }
 
     public override void LoadCargo(double mass)
     {
-        if (IsHazardous && mass > MaxCargoMassKg / 2)
+        var exp1 = IsHazardous && mass > MaxCargoMassKg / 2;
+        var exp2 = mass * 10 > MaxCargoMassKg * 9;
+        if (exp1 || exp2)
         {
             Notify();
-            throw new OverfillException("Trying to load hazardous liquid cargo exceeding allowed limit!");
+            throw new OverfillException("Przekroczono dopuszczalny limit masy!");
         }
-        if (mass * 10 > MaxCargoMassKg * 9)
-        {
-            Notify();
-            throw new OverfillException("Trying to load non-hazardous liquid cargo exceeding allowed limit!");
-        }
-
         base.LoadCargo(mass);
+    }
+    
+    public override string ToString()
+    {
+        return base.ToString() + $"\n  Klasyfikacja: {(IsHazardous ? "niebezpieczny" : "bezpieczny")}}}";
     }
 }
