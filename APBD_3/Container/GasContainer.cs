@@ -17,6 +17,10 @@ public class GasContainer(double ownMassKg, double heightCm, double depthCm, dou
             Notify();
             throw new OverfillException("Przekroczono dopuszczalny limit masy!");
         }
+        if (mass < 0)
+        {
+            throw new ArgumentException("Niewłaściwa masa!");
+        }
         base.LoadCargo(mass);
     }
 

@@ -1,5 +1,6 @@
 ﻿namespace APBD_3.Container;
 
+
 public abstract class CargoContainer
 {
     public string SerialNumber { get; }

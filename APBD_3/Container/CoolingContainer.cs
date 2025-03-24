@@ -1,5 +1,6 @@
 ﻿namespace APBD_3.Container;
 
+
 public class CoolingContainer : CargoContainer
 {
     private static int _nextSerialNumber = 1;

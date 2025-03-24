@@ -4,7 +4,7 @@ namespace APBD_3;
 
 public class CargoShip
 {
-    private readonly List<CargoContainer> _containers = [];
+    public List<CargoContainer> Containers { get; }
     private double MaxSpeedKnots { get; }
     private int MaxContainers { get; }
     private double MaxCargoMassT { get; }
@@ -14,6 +14,7 @@ public class CargoShip
         if (maxSpeedKnots <= 0 || maxContainers <= 0 || maxCargoMassT <= 0)
             throw new ArgumentException("Niewłaściwe parametry statku!");
         
+        Containers = [];
         MaxSpeedKnots = maxSpeedKnots;
         MaxContainers = maxContainers;
         MaxCargoMassT = maxCargoMassT;
@@ -21,7 +22,7 @@ public class CargoShip
 
     private double GetCargoMass()
     {
-        return _containers.Sum(container => container.CargoMassKg + container.OwnMassKg);
+        return Containers.Sum(container => container.CargoMassKg + container.OwnMassKg);
     }
     
     public void Load(CargoContainer? cargoContainer)
@@ -30,9 +31,9 @@ public class CargoShip
             throw new ArgumentException("Nieistniejący kontener!");
         if (cargoContainer.OwnMassKg + cargoContainer.CargoMassKg > MaxCargoMassT + GetCargoMass())
             throw new OverfillException("Kontener przewyższa dozwoloną masę ładunku statku!");
-        if (_containers.Count > MaxContainers)
+        if (Containers.Count > MaxContainers)
             throw new OverfillException("Kontener przewyższa dozwoloną liczbę kontenerów na statku!");
-        _containers.Add(cargoContainer);
+        Containers.Add(cargoContainer);
     }
     
     public void Load(List<CargoContainer> containers)
@@ -43,41 +44,38 @@ public class CargoShip
 
     public bool IsContainerLoaded(string? serialNumber)
     {
-        return serialNumber != null && _containers.Any(container => container.SerialNumber == serialNumber);
+        return serialNumber != null && Containers.Any(container => container.SerialNumber == serialNumber);
     }
     
     public void Unload(string serialNumber)
     {
-        var toRemove = _containers.Find(container => container.SerialNumber == serialNumber);
+        var toRemove = Containers.Find(container => container.SerialNumber == serialNumber);
         if (toRemove == null)
-            throw new NullReferenceException("Na tym statku nie ma tego kontenera!");
+            throw new ArgumentException("Na tym statku nie ma tego kontenera!");
         
-        _containers.Remove(toRemove);
+        Containers.Remove(toRemove);
     }
     
-    public void Replace(string serialNumber, CargoContainer? newContainer)
+    public void Replace(string serialNumber, CargoContainer newContainer)
     {
-        var toReplace = _containers.Find(container => container.SerialNumber == serialNumber);
+        var toReplace = Containers.Find(container => container.SerialNumber == serialNumber);
         if (toReplace == null)
-            throw new NullReferenceException("Na tym statku nie ma tego kontenera!");
-        if (newContainer == null)
-            throw new NullReferenceException("Nieistniejący kontener!");
+            throw new ArgumentException("Na tym statku nie ma tego kontenera!");
         
         if (GetCargoMass() - toReplace.CargoMassKg + newContainer.CargoMassKg > MaxCargoMassT * 1000)
             throw new OverfillException("Kontener przewyższa dozwoloną masę ładunku nowego statku!");
         
-        _containers.Remove(toReplace);
-        _containers.Add(newContainer);
+        Containers.Remove(toReplace);
+        Containers.Add(newContainer);
     }
 
     public void MoveContainer(string serialNumber, CargoShip newShip)
     {
-        var cargoContainer = _containers.Find(container => container.SerialNumber == serialNumber);
-        
+        var cargoContainer = Containers.Find(container => container.SerialNumber == serialNumber);
         if (cargoContainer == null)
-            throw new NullReferenceException("Na tym statku nie ma tego kontenera!");
+            throw new ArgumentException("Na tym statku nie ma tego kontenera!");
         
-        _containers.Remove(cargoContainer);
+        Containers.Remove(cargoContainer);
         newShip.Load(cargoContainer);
     }
 
@@ -85,7 +83,7 @@ public class CargoShip
     public override string ToString()
     {
         return $"{{ " + 
-               $"  Pojemność: {_containers.Count}/{MaxContainers} kontenerów" +
+               $"  Pojemność: {Containers.Count}/{MaxContainers} kontenerów" +
                $"  Max prędkość: {MaxSpeedKnots} kn" +
                $"  Masa ładunku: {GetCargoMass()/1000} t / {MaxCargoMassT} t" +
                $" }}";

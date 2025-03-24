@@ -25,6 +25,10 @@ public class LiquidContainer : CargoContainer
             Notify();
             throw new OverfillException("Przekroczono dopuszczalny limit masy!");
         }
+        if (mass < 0)
+        {
+            throw new ArgumentException("Niewłaściwa masa!");
+        }
         base.LoadCargo(mass);
     }
     
